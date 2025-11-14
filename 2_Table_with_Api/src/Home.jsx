@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faStar,
+  faStarHalfAlt,
+  faStar as faStarEmpty
+} from "@fortawesome/free-solid-svg-icons";
+import './style.css'
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -8,15 +15,18 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(10);
   const [popup, setPopup] = useState(null);
+  const [total, setTotal] =useState(0);
 
   const navigate = useNavigate();
 
-  const apicall = async () => {
+  const apicall = async (page, limit) => {
     try {
-      let res = await fetch("https://dummyjson.com/products");
+      let skip =(page-1)*limit;
+      let res = await fetch(`https://dummyjson.com/products?limit=${limit}&skip=${skip}`);
       let response = await res.json();
       // console.log(response);
       setProducts(response.products);
+      setTotal(response.total)
     } catch (e) {
       console.log(e);
     } finally {
@@ -24,13 +34,13 @@ export default function Home() {
     }
   };
   useEffect(() => {
-    apicall();
-  }, []);
+    apicall(page, itemPerPage);
+  }, [page, itemPerPage]);
 
-  const totalPages = Math.ceil(products.length / itemPerPage);
+  const totalPages = Math.ceil(total / itemPerPage);
   const start = (page - 1) * itemPerPage;
-  const end = start + itemPerPage;
-  const currentItems = products.slice(start, end);
+  // const end = start + itemPerPage;
+  const currentItems = products;
 
   if (loading)
     return (
@@ -45,12 +55,24 @@ export default function Home() {
     let stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= value) {
-        stars.push(<span key={i}>★</span>);
+        stars.push(<span key={i}><FontAwesomeIcon
+          key={i}
+          icon={faStar}
+          style={{ marginRight: "3px", color: "#f4c430" }}
+        /></span>);
       } else if (value != HalfStar && cnt == 0) {
-        stars.push(<span key={i}>H</span>);
+        stars.push(<span key={i}><FontAwesomeIcon
+          key={i}
+          icon={faStarHalfAlt}
+          style={{ marginRight: "3px", color: "#f7c01bff" }}
+        /></span>);
         cnt++;
       } else {
-        stars.push(<span key={i}>☆</span>);
+        stars.push(<span key={i}><FontAwesomeIcon
+          key={i}
+          icon={faStar}
+          style={{ marginRight: "3px", color: "#313131ff" }}
+        /></span>);
       }
     }
     return <>{stars}</>;
@@ -59,6 +81,7 @@ export default function Home() {
     <div style={{ padding: "1rem" }}>
       <h2 style={{ textAlign: "center" }}>Products</h2>
 
+      {/* Table */}
       <div
         style={{
           marginTop: "5vh",
@@ -123,7 +146,7 @@ export default function Home() {
 
           <tbody>
             {currentItems.map((product) => (
-              <tr key={product.id} style={{ textAlign: "center" }}>
+              <tr key={product.id} style={{ textAlign: "center" , background: "#bbe7e7ff"}}>
                 <td style={{ padding: "8px" }}>{product.id}</td>
                 <td style={{ padding: "8px" }}>{product.title}</td>
                 <td style={{ padding: "8px" }}>${product.price}</td>
@@ -143,7 +166,8 @@ export default function Home() {
           </tbody>
         </table>
       </div>
-
+          
+      {/* Pagination + Limiter */}
       <div
         style={{
           display: "flex",
@@ -185,32 +209,66 @@ export default function Home() {
         <div style={{ display: "flex", alignItems: "center" }}>
           {(() => {
             const buttons = [];
-            for (let i = 0; i < totalPages; i++) {
+            // const show = 3;
+            let start =page-1;
+            const end = start +2;
+
+            if(start==0){
+              start=1;
+            }
+
+            for (let i = start; i <=end && i<totalPages; i++) {
               buttons.push(
                 <button
-                  key={i + 1}
-                  onClick={() => setPage(i + 1)}
+                  key={i}
+                  onClick={() => setPage(i)}
                   style={{
                     padding: "6px 12px",
                     margin: "0 3px",
-                    backgroundColor: page === i + 1 ? "#4CAF50" : "#e0e0e0",
-                    color: page === i + 1 ? "white" : "black",
+                    backgroundColor: page === i ? "#4CAF50" : "#e0e0e0",
+                    color: page === i ? "white" : "black",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     cursor: "pointer",
-                    fontWeight: page === i + 1 ? "bold" : "normal",
+                    fontWeight: page === i ? "bold" : "normal",
                     transition: "0.2s",
                   }}
-                >
-                  {i + 1}
+                > 
+                  { i }
                 </button>
               );
             }
+
+            if(end<totalPages-1){
+              buttons.push(<span key={totalPages-1}>.....</span>)
+            }
+
+            buttons.push(
+              <button
+                key={totalPages}
+                onClick={() => setPage(totalPages)}
+                style={{
+                  padding: "6px 12px",
+                  margin: "0 3px",
+                  backgroundColor: page === totalPages ? "#4CAF50" : "#e0e0e0",
+                  color: page === totalPages ? "white" : "black",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: page === totalPages ? "bold" : "normal",
+                  transition: "0.2s",
+                }}
+              > 
+                { totalPages }
+              </button>
+            );
+
             return buttons;
           })()}
         </div>
       </div>
 
+      {/* Popup */}
       {popup && (
         <div
           style={{
@@ -243,7 +301,17 @@ export default function Home() {
                 justifyContent: "space-around",
               }}
             >
-              <button onClick={() => navigate(`/details/${popup.id}`)}>
+              <button onClick={() => navigate(`/details/${popup.id}`,{
+                state: {
+                  title: popup.title,
+                  descc: popup.description,
+                  price: popup.price,
+                  brand: popup.brand,
+                  rating: popup.rating,
+                  category: popup.category,
+                  image: popup.thumbnail
+                },
+              })}>
                 Yes
               </button>
               <button onClick={() => setPopup(null)}>Cancel</button>
