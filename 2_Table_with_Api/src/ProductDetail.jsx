@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "./style.css";
+import {useDispatch, useSelector} from 'react-redux'
+import { fetchProductById, setProductDetail } from "./redux/ProductSlice";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const {state} = useLocation();
-  console.log(state)
+  const dispatch = useDispatch();
+  const {productDetail }= useSelector((s)=> s.product)
+  // console.log(state)
   // const [product, setProduct] = useState(null);
   // const [loading, setLoading] = useState(true);
   const [desc, setDesc] = useState(false);
@@ -27,9 +31,11 @@ export default function ProductDetail() {
   //   }
   // };
 
-  // useEffect(() => {
-  //   apicall();
-  // }, [id]);
+  useEffect(() => {
+    // apicall();
+    dispatch(setProductDetail(null))
+    dispatch(fetchProductById(id));
+  }, [id]);
 
   // if (loading)
   //   return (
@@ -37,33 +43,35 @@ export default function ProductDetail() {
   //       Loading...
   //     </p>
   //   );
-  // if (!product)
-  //   return (
-  //     <p className="loading">
-  //       No Page Exist...
-  //     </p>
-  //   );
+  if (!productDetail)
+    return (
+      <p className="loading">
+        No Page Exist...
+      </p>
+    );
 
-  const words = state.descc.split(" ");
+
+
+  const words = productDetail?.description.split(" ");
   const shortDesc =  words.splice(0,6).join(" ");
     
   return (
     <div className="Container">
       <button className="back" onClick={() => navigate(-1)}>← Back</button>
       <div className="card">
-        <img src={state.image} alt={state.title} className="img" />
+        <img src={productDetail.thumbnail} alt={productDetail.title} className="img" />
         <div className="info">
-          <h2 className="title">{state.title}</h2>
+          <h2 className="title">{productDetail.title}</h2>
           <p className="desc">
-            {desc ? state.descc : shortDesc}
+            {desc ? productDetail.description : shortDesc}
             {words.length>5 && ( <span className="see-more" onClick={()=> setDesc(!desc)}>
               {desc ? "See less" : "...See more"}
             </span>)}
           </p>
-          <p className="price">${state.price}</p>
-          <p className="rating">⭐ {state.rating}</p>
-          <p className="brand">Brand: {state.brand}</p>
-          <p className="category">Category: {state.category}</p>
+          <p className="price">${productDetail.price}</p>
+          <p className="rating">⭐ {productDetail.rating}</p>
+          <p className="brand">Brand: {productDetail.brand}</p>
+          <p className="category">Category: {productDetail.category}</p>
         </div>
       </div>
     </div>

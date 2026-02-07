@@ -8,46 +8,52 @@ import {
   faStar as faStarEmpty
 } from "@fortawesome/free-solid-svg-icons";
 import './style.css'
+import {useDispatch, useSelector} from 'react-redux'
+import { fetchProducts } from "./redux/ProductSlice";
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
+  // const [products, setProducts] = useState([]);
+  const dispatch = useDispatch();
+
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(10);
   const [popup, setPopup] = useState(null);
-  const [total, setTotal] =useState(0);
+  // const [total, setTotal] =useState(0);
+  const {products, total} = useSelector((s)=> s.product);
 
   const navigate = useNavigate();
 
-  const apicall = async (page, limit) => {
-    try {
-      let skip =(page-1)*limit;
-      let res = await fetch(`https://dummyjson.com/products?limit=${limit}&skip=${skip}`);
-      let response = await res.json();
-      // console.log(response);
-      setProducts(response.products);
-      setTotal(response.total)
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const apicall = async (page, limit) => {
+  //   try {
+  //     let skip =(page-1)*limit;
+  //     let res = await fetch(`https://dummyjson.com/products?limit=${limit}&skip=${skip}`);
+  //     let response = await res.json();
+  //     // console.log(response);
+  //     setProducts(response.products);
+  //     setTotal(response.total)
+  //   } catch (e) {
+  //     console.log(e);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   useEffect(() => {
-    apicall(page, itemPerPage);
+    setLoading(true);
+    dispatch(fetchProducts(page, itemPerPage)).then(()=> setLoading(false));
   }, [page, itemPerPage]);
 
   const totalPages = Math.ceil(total / itemPerPage);
-  const start = (page - 1) * itemPerPage;
+  // const start = (page - 1) * itemPerPage;
   // const end = start + itemPerPage;
   const currentItems = products;
 
-  if (loading)
-    return (
-      <p style={{ textAlign: "center", marginTop: "10rem", fontSize: "2rem" }}>
-        Loading...
-      </p>
-    );
+  // if (loading)
+  //   return (
+  //     <p style={{ textAlign: "center", marginTop: "10rem", fontSize: "2rem" }}>
+  //       Loading...
+  //     </p>
+  //   );
 
   function rating(value) {
     const HalfStar = Math.ceil(value);
